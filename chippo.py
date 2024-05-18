@@ -58,8 +58,6 @@ Highlight the candidate's key responses and strengths.
 Write down only the answers to questions that can be inferred from the given history.
 Keep the summary concise and focused.
 
-Extracted questions: {questions}
-
 Chat history: {chat_history}
 
 Note that the summary should be written in the language used in the chat history. (e.g. Korean)
