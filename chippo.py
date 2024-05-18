@@ -3,11 +3,10 @@
 import dotenv
 import streamlit as st
 from langchain_upstage import ChatUpstage as Chat
-from langchain_upstage import GroundednessCheck
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_upstage import UpstageLayoutAnalysisLoader
 import tempfile, os
 
@@ -24,7 +23,7 @@ Focus on aligning the candidate's experience and skills with the job requirement
 If the resume lacks specific details, suggest questions to probe further.
 Use three sentences maximum per question to keep them concise.
 
-Considering the time constraints, aim to extract at most 10 questions.
+Considering the time constraints, aim to extract at most 5 questions.
 
 Job Description: {job_description}
 
@@ -76,8 +75,6 @@ At the end of the summary, you should rate the candidate by following criteria:
 
 Summary:
 """)
-
-groundedness_check = GroundednessCheck()
 
 
 def get_response(chat_history):
@@ -168,16 +165,28 @@ if st.session_state.jd_docs and st.session_state.resume_docs and not st.session_
 
         st.session_state.questions = st.write_stream(chain)
 
+
+def refresh_question():
+    st.session_state.questions = ""
+
+
+def refresh_chat():
+    st.session_state.messages = []
+    st.session_state.finished = False
+
+
 if st.session_state.questions:
     with st.expander("Show Questions"):
-        if st.button("Refresh"):
-            st.session_state.questions = ""
+        st.button("Refresh", on_click=refresh_question)
         st.write(st.session_state.questions)
+
 
 for message in st.session_state.messages:
     role = "AI" if isinstance(message, AIMessage) else "Human"
     with st.chat_message(role):
         st.markdown(message.content)
+
+st.button("Restart", on_click=refresh_chat, disabled=len(st.session_state.messages) == 0)
 
 if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_state.jd_docs or not st.session_state.resume_docs):
     st.session_state.messages.append(
@@ -189,6 +198,14 @@ if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_stat
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        with st.status("Retrieving prompt"):
+            st.write(chat_with_history_prompt.format(
+                job_description=st.session_state.jd_docs,
+                resume=st.session_state.resume_docs,
+                questions=st.session_state.questions,
+                chat_history=st.session_state.messages,
+                user_question=prompt,
+            ))
         response = st.write_stream(get_response(st.session_state.messages))
 
     st.session_state.messages.append(
