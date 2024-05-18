@@ -17,7 +17,7 @@ llm = Chat()
 
 q_extraction_prompt = PromptTemplate.from_template(
     """You are an assistant for preparing job interviews at an IT startup.
-Use the following job description (JD) and candidate's resume to extract key question points for the interview.
+Use the following job description (JD) and candidate's resume to extract key question points in Korean for the interview.
 Focus on aligning the candidate's experience and skills with the job requirements.
 
 If the resume lacks specific details, suggest questions to probe further.
