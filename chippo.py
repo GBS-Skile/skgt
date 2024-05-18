@@ -13,7 +13,7 @@ import tempfile, os
 st.title("Chippo: Your AI Job Interview Assistant")
 dotenv.load_dotenv()
 
-llm = Chat()
+llm = Chat(temperature=0.1) # prompt가 길면 문제가 될 수 있음.
 
 q_extraction_prompt = PromptTemplate.from_template(
     """You are an assistant for preparing job interviews at an IT startup.
@@ -48,6 +48,9 @@ Note that you may ask the only one question at a time to keep the conversation n
 Chat history
 ---
 {chat_history}
+---
+
+Your
 """)
 
 interview_summarisation_prompt = PromptTemplate.from_template(
