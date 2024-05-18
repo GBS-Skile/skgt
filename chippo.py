@@ -48,9 +48,7 @@ Note that you may ask the only one question at a time to keep the conversation n
 Chat history
 ---
 {chat_history}
----
-
-Your Message: 
+AI:
 """)
 
 interview_summarisation_prompt = PromptTemplate.from_template(
