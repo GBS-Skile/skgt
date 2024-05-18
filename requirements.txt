@@ -1,0 +1,7 @@
+langchain_upstage==0.1.4
+openai
+requests 
+streamlit
+langchain
+langchain-upstage
+langchainhub
