@@ -45,9 +45,9 @@ Extracted questions: {questions}
 
 Note that you may ask the only one question at a time to keep the conversation natural.
 
-Chat history
----
-{chat_history}
+[{chat_history}]
+
+Human: {user_input}
 AI:
 """)
 
@@ -80,6 +80,7 @@ def get_response(chat_history):
         resume=st.session_state.resume_docs,
         questions=st.session_state.questions,
         chat_history=ChatPromptTemplate.from_messages(chat_history).format(),
+        user_input=st.session_state.messages[-1].content,
     )
 
     chain = llm | StrOutputParser()
