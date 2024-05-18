@@ -53,7 +53,7 @@ AI:
 
 interview_summarisation_prompt = PromptTemplate.from_template(
     """You are an assistant for summarizing job interviews at an IT startup.
-Use the following interview chat history and previously extracted questions to create a summary.
+Use the following interview chat history to create a summary.
 Highlight the candidate's key responses and strengths.
 
 Write down only the answers to questions that can be inferred from the given history.
@@ -61,7 +61,7 @@ Keep the summary concise and focused.
 
 Chat history: {chat_history}
 
-Note that the summary should be written in the language used in the chat history. (e.g. Korean)
+Note that the summary should be written in the language used in the resume. (e.g. Korean)
 At the end of the summary, you should rate the candidate by following criteria:
 
 1/5: You should not hire this candidate.
