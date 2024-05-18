@@ -43,13 +43,11 @@ Resume: {resume}
 
 Extracted questions: {questions}
 
-Chat history: {chat_history}
-
-User query: {user_question}
-
 Note that you may ask the only one question at a time to keep the conversation natural.
-Don't repeat the candidate's answers. Good question should be open-ended and encourage the candidate to elaborate.
-Also, do not repeat your questions. Even if the candidate does not answer your question, you should not ask it again.
+
+Chat history
+---
+{chat_history}
 """)
 
 interview_summarisation_prompt = PromptTemplate.from_template(
@@ -78,17 +76,16 @@ Summary:
 
 
 def get_response(chat_history):
-    chain = chat_with_history_prompt | llm | StrOutputParser()
-
-    return chain.stream(
-        {
-            "job_description": st.session_state.jd_docs,
-            "resume": st.session_state.resume_docs,
-            "chat_history": chat_history,
-            "user_question": chat_history[-1].content,
-            "questions": st.session_state.questions,
-        }
+    prompt = chat_with_history_prompt.format(
+        job_description=st.session_state.jd_docs,
+        resume=st.session_state.resume_docs,
+        questions=st.session_state.questions,
+        chat_history=ChatPromptTemplate.from_messages(chat_history).format(),
     )
+
+    chain = llm | StrOutputParser()
+
+    return prompt, chain.stream(prompt)
 
 
 if "messages" not in st.session_state:
@@ -198,15 +195,10 @@ if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_stat
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        prompt, chain = get_response(st.session_state.messages)
         with st.status("Retrieving prompt"):
-            st.write(chat_with_history_prompt.format(
-                job_description=st.session_state.jd_docs,
-                resume=st.session_state.resume_docs,
-                questions=st.session_state.questions,
-                chat_history=st.session_state.messages,
-                user_question=prompt,
-            ))
-        response = st.write_stream(get_response(st.session_state.messages))
+            st.write(prompt)
+        response = st.write_stream(chain)
 
     st.session_state.messages.append(
         AIMessage(content=f"{response}"),
