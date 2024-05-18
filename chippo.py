@@ -49,6 +49,8 @@ Chat history: {chat_history}
 User query: {user_question}
 
 Note that you may ask the only one question at a time to keep the conversation natural.
+Don't repeat the candidate's answers. Good question should be open-ended and encourage the candidate to elaborate.
+Also, do not repeat your questions. Even if the candidate does not answer your question, you should not ask it again.
 """)
 
 interview_summarisation_prompt = PromptTemplate.from_template(
