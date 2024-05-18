@@ -15,22 +15,40 @@ st.title("Chippo: Your AI Job Interview Assistant")
 dotenv.load_dotenv()
 
 llm = Chat()
-# https://smith.langchain.com/hub/hunkim/rag-qa-with-history
+
+q_extraction_prompt = PromptTemplate.from_template(
+    """You are an assistant for preparing job interviews at an IT startup.
+Use the following job description (JD) and candidate's resume to extract key question points for the interview.
+Focus on aligning the candidate's experience and skills with the job requirements.
+
+If the resume lacks specific details, suggest questions to probe further.
+Use three sentences maximum per question to keep them concise.
+
+Considering the time constraints, aim to extract at most 10 questions.
+
+Job Description: {job_description}
+
+Resume: {resume}
+""")
+
 chat_with_history_prompt = PromptTemplate.from_template(
     """You are an assistant for conducting job interviews at an IT startup.
 Use the following pieces of retrieved context to conduct the interview considering the company's requirements and culture.
 
 If you need to know more about the candidate's experience or skills, ask specific follow-up questions.
 Use three sentences maximum per question to keep the interview focused and efficient.
-You may ask the only one question at a time.
 
 Job Description: {job_description}
 
 Resume: {resume}
 
+Extracted questions: {questions}
+
 Chat history: {chat_history}
 
-User question: {user_question}
+User query: {user_question}
+
+Note that you may ask the only one question at a time to keep the conversation natural.
 """)
 
 groundedness_check = GroundednessCheck()
@@ -45,6 +63,7 @@ def get_response(chat_history):
             "resume": st.session_state.resume_docs,
             "chat_history": chat_history,
             "user_question": chat_history[-1].content,
+            "questions": st.session_state.questions,
         }
     )
 
@@ -58,11 +77,13 @@ if "jd_docs" not in st.session_state:
 if "resume_docs" not in st.session_state:
     st.session_state.resume_docs = []
 
+if "questions" not in st.session_state:
+    st.session_state.questions = ""
+
 with st.sidebar:
-    st.header(f"Job Description")
+    st.header(f"Input")
 
     jd_file = st.file_uploader("Job Description", type="pdf")
-    resume_file = st.file_uploader("Resume", type="pdf")
 
     to_upload = lambda file: file and file.name not in st.session_state
 
@@ -86,6 +107,8 @@ with st.sidebar:
 
         st.success("Ready to Chat!")
     
+    resume_file = st.file_uploader("Resume", type="pdf")
+
     if to_upload(resume_file):
         with st.status("Processing the data ..."):
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -105,6 +128,23 @@ with st.sidebar:
                 st.session_state[resume_file.name] = True
 
 
+if st.session_state.jd_docs and st.session_state.resume_docs and not st.session_state.questions:
+    with st.status("Generating questions ..."):
+        chain = (q_extraction_prompt | llm | StrOutputParser()).stream(
+            {
+                "job_description": st.session_state.jd_docs,
+                "resume": st.session_state.resume_docs,
+            }
+        )
+
+        st.session_state.questions = st.write_stream(chain)
+
+if st.session_state.questions:
+    with st.expander("Show Questions"):
+        if st.button("Refresh"):
+            st.session_state.questions = ""
+        st.write(st.session_state.questions)
+
 for message in st.session_state.messages:
     role = "AI" if isinstance(message, AIMessage) else "Human"
     with st.chat_message(role):
@@ -120,8 +160,6 @@ if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_stat
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.status("Getting context..."):
-            st.write(st.session_state.messages)
         response = st.write_stream(get_response(st.session_state.messages))
 
     st.session_state.messages.append(
