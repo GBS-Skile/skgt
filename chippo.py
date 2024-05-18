@@ -51,6 +51,30 @@ User query: {user_question}
 Note that you may ask the only one question at a time to keep the conversation natural.
 """)
 
+interview_summarisation_prompt = PromptTemplate.from_template(
+    """You are an assistant for summarizing job interviews at an IT startup.
+Use the following interview chat history and previously extracted questions to create a summary.
+Highlight the candidate's key responses and strengths.
+
+Write down only the answers to questions that can be inferred from the given history.
+Keep the summary concise and focused.
+
+Extracted questions: {questions}
+
+Chat history: {chat_history}
+
+Note that the summary should be written in the language used in the chat history. (e.g. Korean)
+At the end of the summary, you should rate the candidate by following criteria:
+
+1/5: You should not hire this candidate.
+2/5: You should consider other candidates.
+3/5: You should consider this candidate with caution.
+4/5: You should consider this candidate. 
+5/5: You should hire this candidate!
+
+Summary:
+""")
+
 groundedness_check = GroundednessCheck()
 
 
@@ -79,6 +103,9 @@ if "resume_docs" not in st.session_state:
 
 if "questions" not in st.session_state:
     st.session_state.questions = ""
+
+if "finished" not in st.session_state:
+    st.session_state.finished = False
 
 with st.sidebar:
     st.header(f"Input")
@@ -165,3 +192,16 @@ if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_stat
     st.session_state.messages.append(
         AIMessage(content=f"{response}"),
     )
+
+if st.button("Summarise & Rate Candidate"):
+    st.header("Interview Summary")
+    chain = interview_summarisation_prompt | llm | StrOutputParser()
+    st.write_stream(
+        chain.stream(
+            {
+                "questions": st.session_state.questions,
+                "chat_history": st.session_state.messages,
+            }
+        )
+    )
+    st.write("Thank you for using Chippo!")
