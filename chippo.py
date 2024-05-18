@@ -13,7 +13,7 @@ import tempfile, os
 st.title("Chippo: Your AI Job Interview Assistant")
 dotenv.load_dotenv()
 
-llm = Chat(temperature=0.1) # prompt가 길면 문제가 될 수 있음.
+llm = Chat(temperature=0.3, max_tokens=200) # prompt가 길면 문제가 될 수 있음.
 
 q_extraction_prompt = PromptTemplate.from_template(
     """You are an assistant for preparing job interviews at an IT startup.
@@ -50,7 +50,7 @@ Chat history
 {chat_history}
 ---
 
-Your
+Your Message: 
 """)
 
 interview_summarisation_prompt = PromptTemplate.from_template(
@@ -128,8 +128,6 @@ with st.sidebar:
 
                 # processed
                 st.session_state[jd_file.name] = True
-
-        st.success("Ready to Chat!")
     
     resume_file = st.file_uploader("Resume", type="pdf")
 
@@ -153,6 +151,7 @@ with st.sidebar:
 
 
 if st.session_state.jd_docs and st.session_state.resume_docs and not st.session_state.questions:
+    st.success("Ready to Chat!")
     with st.status("Generating questions ..."):
         chain = (q_extraction_prompt | llm | StrOutputParser()).stream(
             {
@@ -198,7 +197,7 @@ if prompt := st.chat_input("Hello, my name is ...", disabled=not st.session_stat
     with st.chat_message("assistant"):
         prompt, chain = get_response(st.session_state.messages)
         with st.status("Retrieving prompt"):
-            st.write(prompt)
+            st.text(prompt)
         response = st.write_stream(chain)
 
     st.session_state.messages.append(
