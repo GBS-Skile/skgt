@@ -64,11 +64,12 @@ Chat history: {chat_history}
 Note that the summary should be written in the language used in the resume. (e.g. Korean)
 At the end of the summary, you should rate the candidate by following criteria:
 
-1/5: You should not hire this candidate.
-2/5: You should consider other candidates.
-3/5: You should consider this candidate with caution.
-4/5: You should consider this candidate. 
-5/5: You should hire this candidate!
+No-decision : If the interview did not offer enough information to rate the candidate because of various reasons; for example, the chat was too short or contents of resume is not enough.
+1/5 : if the chat disprove the resume
+2/5 : the candidate has limited qualifications in the context of job description
+3/5 : the candidate has acceptable qualifications in the context of job description
+4/5 : the candidate has favorable qualifications in the context of job description
+5/5 : the candidate has perfect qualifications in the context of job description
 
 Summary:
 """)
